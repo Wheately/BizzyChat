@@ -1,0 +1,39 @@
+<!doctype html>
+<html>
+	<head>
+		<title>Socket.IO chat</title>
+		<link href='http://fonts.googleapis.com/css?family=Source+Sans+Pro' rel='stylesheet' type='text/css'>
+		<link href="style.css" rel="stylesheet" type="text/css" />
+	</head>
+	<body>
+		<div id="chat">
+			<div id="sidebar"></div>
+			
+			<div id="topbar">Welcome to the chatroom!</div>
+			<div id="main">
+				<div id="messages"></div>
+				<div id="input" style="background: white;">
+					<input type="text" id="msgBox" placeholder="Type your message here.." />
+				</div>
+			</div>
+			
+		</div>
+		<div id="login">
+		  <section class="container">
+			<div class="login">
+			  <h1>Join Chat</h1>
+			  <form method="post" action="/">
+				<p><input type="text" id="login_nick" value="" placeholder="Nickname"></p>
+				<p><input type="password" id="login_pass" value="" placeholder="Password(only if you have one)"></p>
+				<p class="submit"><input type="submit" id="login_btn" value="Join" onclick="javascript:doLogin();return false;"></p>
+				<span id="resp"><p style="color: darkred;"><strong>Failed to join server: <span id="resp_error"></span></p></span>
+			  </form>
+			</div>
+		  </section>
+		</div>
+		
+		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
+		<script src="http://code.jquery.com/jquery-1.11.1.js"></script>
+		<script src="site.js"></script>
+	</body>
+</html>
