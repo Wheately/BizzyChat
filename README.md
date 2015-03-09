@@ -5,6 +5,8 @@ This is a free open source little project I decided to do for fun.
 
 It's not going to be the most complicated web chat in the world or anything but it could be fun to play with if you're new to Node.JS and Socket.IO.
 
+Screenshots and such can be seen on my blog post here: http://bizzycola.info/?p=49
+
 ## Current Features ##
 -Login with nickname and optional password(check auth.js for validating passwords. Methods other than if statements will be added later).
 
