@@ -1,5 +1,6 @@
 var socket = io();
 var myNick = "";
+var hasAuth = false;
 
 $(function()
 {
@@ -10,7 +11,10 @@ $(function()
 
 function validate_message(msg)
 {
+	if(msg.length > 300)
+		msg = msg.substr(1, 300) + "...";
 	
+	return msg;
 }
 
 function doLogin()
@@ -27,6 +31,7 @@ $('#msgBox').keypress(function (e) {
 		var text =  $("#msgBox").val();
 		$('#msgBox').val('');
 		
+		text = validate_message(text);
 		socket.emit('CHAT_MSG', text);
 		$('#messages').append("<span class='chat_message'><span class='chat_nick'>"+myNick+"</span>: "+text+"</span><br/>");
 		
@@ -63,7 +68,7 @@ socket.on('USR_KICKED', function(nick, reason)
 	$('#messages').append("<span class='chat_message user_notice'><span class='chat_nick'>"+nick+"</span> was kicked("+reason+").</span><br/>");
 	getNicks();
 });
-socket.on('disconnected', function(reason)
+socket.on('disconnected', function()
 {
 	window.location = window.location;
 });
@@ -88,12 +93,33 @@ socket.on('CHAT_HISTORY', function(list)
 		$('#messages').append("<span class='chat_message'><span class='chat_nick'>"+list[i][0]+"</span>: "+list[i][1]+"</span><br/>");
 	
 });
+socket.on('HAS_AUTH', function(status)
+{
+	if(!hasAuth) return;
+	
+	if(!status)
+	{
+		hasAuth = false;
+		alert("Disconnected from server.");
+		window.location = window.location;
+	}
+	else
+		console.log("kk");
+});
 
 function getNicks()
 {
-	socket.emit("NICK_LIST");
+	if(hasAuth)
+		socket.emit("NICK_LIST");
 }
 setInterval(getNicks, 3000)
+
+function checkAuth()
+{
+	if(hasAuth)
+		socket.emit("HAS_AUTH");
+}
+setInterval(checkAuth, 2000)
 
 //auth response
 socket.on('AUTH_RESPONSE', function(status, error)
@@ -105,10 +131,12 @@ socket.on('AUTH_RESPONSE', function(status, error)
 		myNick = $("#login_nick").val();
 		$("#login_pass").val("");
 		$("#resp").hide();
+		hasAuth = true;
 	}
 	else
 	{
 		$("#resp_error").html(error);
 		$("#resp").show();
+		hasAuth = false;
 	}
 });
