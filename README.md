@@ -18,12 +18,12 @@ Screenshots and such can be seen on my blog post here: http://bizzycola.info/?p=
 
 -The last 20 lines of chat history will be sent to the client when they join, a bit like a shoutbox.
 
+-Configurable maximum message length(after the limit is reached, the rest will be cut off and replaced with "...")
+
 ## Upcoming Features ##
 -Proper authentication with some kind of database to store registered nicknames.
 
 -Prevent duplicate nicks.
-
--Add a maximum message length.
 
 -Notify the user when they are disconnected in some fashion other than being kicked.
 
