@@ -1,7 +1,7 @@
 var auth_user = [];
 auth_user["bizzycola"] = ["BZ1845", true]; //auth_user["nickname"] = {"password", is_admin}; --Be sure all nicks specified here are lowercase.
 
-function auth_checkauth(socket, nick, pass)
+function auth_checkauth(user_info, socket, nick, pass)
 {
 	var reg = /^([a-zA-Z0-9_-]){3,15}$/;
 	
@@ -10,6 +10,23 @@ function auth_checkauth(socket, nick, pass)
 	else
 	{
 		var lnick = nick.toLowerCase();
+		
+		var inUse = false;
+		for (var i in user_info) 
+		{
+			if(user_info[i] && user_info[i]["nickname"] && user_info[i]["nickname"].toLowerCase() == lnick)
+			{
+				inUse = true;
+				break;
+			}
+		}
+		
+		if(inUse)
+		{
+			socket.emit('AUTH_RESPONSE', false, "Nickname already in use.");
+			return false;
+		}
+		
 		if(!auth_user[lnick] || (auth_user[lnick] && auth_user[lnick][0] == pass))
 		{
 			socket.emit('AUTH_RESPONSE', true, "");

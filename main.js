@@ -151,7 +151,7 @@ io.on('connection', function(socket)
 	//User sent a login request
 	socket.on('AUTH_LOGIN', function(nick, pass)
 	{
-		var nick = auth_lib.checkAuth(socket, nick, pass);
+		var nick = auth_lib.checkAuth(user_info, socket, nick, pass);
 		user_info[socket.id]["nickname"] = nick;
 		
 		//If the login was successful, send them the chat history and tell everyone else they joined.
