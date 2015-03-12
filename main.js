@@ -175,7 +175,7 @@ io.on('connection', function(socket)
 				
 				//Make a certain nick red like some kind of admin.
 				//Probably should use this with the authenticated nicks exampled in auth.js.
-				var col = (nick == "MyCoolAdmin") ? "<span style='color: darkred;' title='Admin'>"+nick+"</span>" : nick; 
+				var col = (auth_lib.isAdmin(nick)) ? "<span style='color: darkred;' title='Admin'>"+nick+"</span>" : nick; 
 				
 				nlist.push(col);
 			}

@@ -1,7 +1,7 @@
 /*
  * Kicks a user with a specified reason.
 */
-function kick_user(users, user_info, socket, reason)
+function kick_user(user_info, socket, reason)
 {
 	console.log("USER KICKED: "+reason);
 	
