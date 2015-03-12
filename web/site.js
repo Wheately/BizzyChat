@@ -112,7 +112,7 @@ function getNicks()
 	if(hasAuth)
 		socket.emit("NICK_LIST");
 }
-setInterval(getNicks, 3000)
+setInterval(getNicks, 3000) 
 
 function checkAuth()
 {
