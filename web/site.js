@@ -1,21 +1,89 @@
 var socket = io();
 var myNick = "";
+var msg_id = 0;
 var hasAuth = false;
+var objDiv = document.getElementById("bizzychat-messages");
+var audio = new Audio('Sounds/Notification.mp3')
 
-$(function()
-{
-	$("#chat").hide();
-	$("#login").show();
-	$("#resp").hide();
-});
+//http://stackoverflow.com/questions/5796718/html-entity-decode/27385169#27385169
+var decodeEntities = (function () {
+        //create a new html document (doesn't execute script tags in child elements)
+        var doc = document.implementation.createHTMLDocument("");
+        var element = doc.createElement('div');
+
+        function getText(str) {
+            element.innerHTML = str;
+            str = element.textContent;
+            element.textContent = '';
+            return str;
+        }
+
+        function decodeHTMLEntities(str) {
+            if (str && typeof str === 'string') {
+                //called twice because initially text might be encoded like this: &lt;img src=fake onerror=&quot;prompt(1)&quot;&gt;
+                return getText(getText(str));
+            }
+        }
+        return decodeHTMLEntities;
+    })();
 
 function validate_message(msg)
 {
-	if(msg.length > 300)
-		msg = msg.substr(1, 300) + "...";
+	if(msg.length > 1500)
+		msg = msg.substr(1, 1500) + "...";
 	
 	return msg;
 }
+
+function toggle_show(mid)
+{
+	var ths = $('.showmore_link[data-mid="'+mid+'"]');
+	var showing = ths.data('showing');
+	
+	if(showing == "1")
+	{
+		$('.shortmsg[data-mid="'+mid+'"]').show();
+		$('.longmsg[data-mid="'+mid+'"]').hide();
+		ths.data("showing", "0");
+		ths.html("Show More");
+	}
+	else
+	{
+		$('.shortmsg[data-mid="'+mid+'"]').hide();
+		$('.longmsg[data-mid="'+mid+'"]').show();
+		ths.data("showing", "1");
+		ths.html("Show Less");
+		objDiv.scrollTop = objDiv.scrollHeight;
+	}
+	return false;
+}
+
+//Using a function for this so we can support show more links on chat history as well. 
+function add_message(nick, msg)
+{
+	var nmsg = msg;
+	
+	if(msg.length > 300)
+	{
+		var chatmsg = $("<span class='chat_message'></span>");
+		
+		chatmsg.append("<span class='chat_nick'>"+nick+"</span>: ");
+		chatmsg.append("<span class='shortmsg' data-mid='"+msg_id+"'>"+msg.substr(1, 300)+"</span>");
+		
+		var longmsg = $("<span class='longmsg' data-mid='"+msg_id+"'></span>");
+		longmsg.hide();
+		longmsg.html("<pre>"+msg+"</pre");
+		chatmsg.append(longmsg);
+		chatmsg.append("<br/><a href='#' class='showmore_link' data-mid='"+msg_id+"' data-showing='0' onclick='javascript:toggle_show("+msg_id+");return false;'>Show More</a>");
+		
+		$('.message-list').append(chatmsg);
+	}
+	else
+		$('.message-list').append("<span class='chat_message' data-mid='"+msg_id+"'><span class='chat_nick'>"+nick+"</span>: "+msg+"</span><br/>");
+	objDiv.scrollTop = objDiv.scrollHeight;
+	msg_id++;
+}
+
 
 function doLogin()
 {
@@ -25,16 +93,18 @@ function doLogin()
 	socket.emit('AUTH_LOGIN', nick, pass);
 }
 
-$('#messages').append($('<li class="user_notice">').text("Welcome to the chat!"));
+$('.message-list').append($('<li class="user_notice">').text("Welcome to the chat!"));
 $('#msgBox').keypress(function (e) {
 	if (e.which == 13) {
 		var text =  $("#msgBox").val();
 		$('#msgBox').val('');
 		
-		text = validate_message(text);
+		text = decodeEntities(validate_message(text));
 		socket.emit('CHAT_MSG', text);
-		$('#messages').append("<span class='chat_message'><span class='chat_nick'>"+myNick+"</span>: "+text+"</span><br/>");
+		//$('.message-list').append("<span class='chat_message'><span class='chat_nick'>"+myNick+"</span>: "+text+"</span><br/>");
+		add_message(myNick, text);
 		
+		objDiv.scrollTop = objDiv.scrollHeight;
 		return false;
 	}
 });
@@ -42,18 +112,21 @@ $('#msgBox').keypress(function (e) {
 
 socket.on('CHAT_MSG', function(nick, msg)
 {
-	$('#messages').append("<span class='chat_message'><span class='chat_nick'>"+nick+"</span>: "+msg+"</span><br/>");
+	add_message(nick, msg);
+	audio.play();
 });
 
 socket.on('USR_CONNECT', function()
 {
-	$('#messages').append($('<li class="user_notice">').text("User connected."));
+	$('.message-list').append($('<li class="user_notice">').text("User connected."));
+	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
 });
 
 socket.on('USR_DISCONNECT', function()
 {
-	$('#messages').append($('<li class="user_notice">').text("User disconnected."));
+	$('.message-list').append($('<li class="user_notice">').text("User disconnected."));
+	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
 });
 
@@ -65,7 +138,8 @@ socket.on('CONN_KICKED', function(reason)
 
 socket.on('USR_KICKED', function(nick, reason)
 {
-	$('#messages').append("<span class='chat_message user_notice'><span class='chat_nick'>"+nick+"</span> was kicked("+reason+").</span><br/>");
+	$('.message-list').append("<span class='chat_message user_notice'><span class='chat_nick'>"+nick+"</span> was kicked("+reason+").</span><br/>");
+	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
 });
 socket.on('disconnected', function()
@@ -77,12 +151,11 @@ socket.on('NICK_LIST', function(list)
 {
 	if(!list) return;
 	
-	var html = "<h1 style='color: darkgreen;font-size: 20px'>Users</h1><br/>";
+	var html = "";
 	for(var i = 0; i < list.length; i++)
-		html += "<span class='ulist_nick'>"+list[i]+"</span><br/>";
+		html += "<li class='ulist_nick'>"+list[i]+"</li>";
 	
-	html += "";
-	$("#sidebar").html(html);
+	$("#user-list").html(html);
 });
 
 socket.on('CHAT_HISTORY', function(list)
@@ -90,7 +163,8 @@ socket.on('CHAT_HISTORY', function(list)
 	if(!list) return;
 	
 	for(var i = 0; i < list.length; i++)
-		$('#messages').append("<span class='chat_message'><span class='chat_nick'>"+list[i][0]+"</span>: "+list[i][1]+"</span><br/>");
+		add_message(list[i][0], list[i][1]);
+		//$('.message-list').append("<span class='chat_message'><span class='chat_nick'>"+list[i][0]+"</span>: "+list[i][1]+"</span><br/>");
 	
 });
 socket.on('HAS_AUTH', function(status)
@@ -112,7 +186,7 @@ function getNicks()
 	if(hasAuth)
 		socket.emit("NICK_LIST");
 }
-setInterval(getNicks, 3000) 
+setInterval(getNicks, 3000)
 
 function checkAuth()
 {
@@ -139,4 +213,13 @@ socket.on('AUTH_RESPONSE', function(status, error)
 		$("#resp").show();
 		hasAuth = false;
 	}
+});
+
+
+$(function()
+{
+	$("#chat").hide();
+	$("#login").show();
+	$("#resp").hide();
+	
 });

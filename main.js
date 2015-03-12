@@ -4,9 +4,10 @@ var _config = {};
 _config["chat_timeout"] = 3; //The amount of time in which timeout_msg_num messages can be sent before the user is kicked.
 _config["timeout_msg_num"] = 5; //Number of messages within chat_timeout before being kicked.
 _config["server_root"] = __dirname ;
-_config["max_msg_length"] = 200;
+_config["max_msg_length"] = 1500;
 
 //Include our requirements
+var readline = require('readline');
 var express = require('express');
 var app = express();
 var http = require('http').Server(app);
@@ -14,6 +15,8 @@ var io = require('socket.io')(http);
 var FixedQueue = require('./inc/fqueue.js');
 var auth_lib = require("./inc/auth.js");
 var user_lib = require("./inc/users.js");
+var Entities = require('html-entities').XmlEntities;
+entities = new Entities();
 
 var chat_history = FixedQueue.FixedQueue(20); //Use a fixed queue to store the chat history.
 var users = []; //Holds a list of user sockets
@@ -104,6 +107,8 @@ function on_message(socket, msg)
 	if(msg.length > _config["max_msg_length"])
 		msg = msg.substr(1, _config["max_msg_length"]) + "..."; //Add 3 dots on the end because why not.
 	
+	msg = entities.encode(msg);
+	
 	//Add the message to the chat history
 	chat_history.push([user_info[socket.id]["nickname"], msg]);
 	
@@ -193,3 +198,24 @@ http.listen(3120, function()
 {
 	console.log('listening on *:3120'); //totally obviously most important line of code
 });
+
+
+//console input
+var rl = readline.createInterface(
+{
+	input: process.stdin,
+	output: process.stdout
+});
+rl.on('line', function (cmd) 
+{
+	if(cmd == "chistory")
+	{
+		chat_history = FixedQueue.FixedQueue(20);
+		console.log("CMD: Chat history cleared.");
+	}
+	else if("help")
+	{
+		console.log("Commands: chistory(Clears chat history)");
+	}
+});
+console.log("Type 'help' for a command list.");
