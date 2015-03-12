@@ -63,6 +63,17 @@ function init_socket(socket)
 	user_info[socket.id]["num_messages"] = 0;
 }
 
+/*
+ * Gets a socket from a nickname or returns false if there isn't one.
+*/
+function get_user(nick)
+{
+	for (var i in user_info) 
+		if(user_info[i] && user_info[i]["nickname"])
+			return i;
+	
+	return false;
+}
 
 
 /*
@@ -117,6 +128,47 @@ function on_message(socket, msg)
 	
 }
 
+/*
+ * Called when someone sends a private message.
+*/
+function on_pmessage(socket, nick, msg)
+{
+	//checks there is info for the user.
+	//If not, kick them because they probably aren't authenticated.
+	if(!user_info[socket.id] || !user_info[socket.id]["nickname"])
+	{
+		user_lib.KickUser(user_info, socket, "Not authenticated.");
+		remove_user(socket);
+		return;
+	}
+	
+	//Add onto the time out message count.
+	user_info[socket.id]["chat_timeout"] = 0;
+	user_info[socket.id]["num_messages"]++;
+	if(user_info[socket.id]["num_messages"] >= _config["timeout_msg_num"])
+	{
+		user_lib.KickUser(user_info, socket, "Kicked for chat spam."); //Kick them for spam if they posted too many messages too fast.
+		remove_user(socket);
+		return;
+	}
+	
+	//Trim the message if it is too long.
+	if(msg.length > _config["max_msg_length"])
+		msg = msg.substr(1, _config["max_msg_length"]) + "..."; //Add 3 dots on the end because why not.
+	
+	msg = entities.encode(msg);
+	
+	var csock = get_user(nick);
+	if(!csock)
+	{
+		socket.emit("MSG_ERROR", "PM_NONICK", nick);
+		return;
+	}
+	
+	//send it to the other guy
+	csock.emit('CHAT_PMSG', user_info[socket.id]["nickname"], msg);
+}
+
 //User connections
 io.on('connection', function(socket)
 {
@@ -141,6 +193,10 @@ io.on('connection', function(socket)
 	socket.on('CHAT_MSG', function(msg)
 	{
 		on_message(socket, msg); //send chat messages to our on_message function.
+	});
+	socket.on('CHAT_PMSG', function(to, msg)
+	{
+		on_pmessage(socket, to, msg);
 	});
 	
 	//User asked if they are authenticated. If not, they were probably reconnected.
@@ -199,6 +255,13 @@ http.listen(3120, function()
 	console.log('listening on *:3120'); //totally obviously most important line of code
 });
 
+function args_string(args, start)
+{
+	var out = "";
+	for(var i = start; i < args.length; i++)
+		out += args[i] + " ";
+	return out;
+}
 
 //console input
 var rl = readline.createInterface(
@@ -206,16 +269,33 @@ var rl = readline.createInterface(
 	input: process.stdin,
 	output: process.stdout
 });
-rl.on('line', function (cmd) 
+rl.on('line', function (cmdc) 
 {
+	var args = cmdc.split(" ");
+	var cmd = args[0];
+	
 	if(cmd == "chistory")
 	{
 		chat_history = FixedQueue.FixedQueue(20);
 		console.log("CMD: Chat history cleared.");
 	}
-	else if("help")
+	else if(cmd == "sendmsg")
+		io.emit("CHAT_MSG", "Server", args_string(args, 1));
+	else if(cmd == "sendpmsg")
 	{
-		console.log("Commands: chistory(Clears chat history)");
+		var usr = get_user(args[1]);
+		if(!usr)
+			console.log("Error: user '"+args[1]+"' not found.");
+		else
+			usr.emit("CHAT_PMSG", "Server", args_string(args, 2));
+	}
+	else if(cmd == "help")
+		console.log("Commands: chistory(Clears chat history), sendmsg [msg](Sends a message to everyone), sendpmsg [nick] [msg](Sends a private message to the user)");
+	else if(cmd == "exit")
+	{
+		io.emit("SERVER_SHUTDOWN");
+		rl.close();
+		process.exit(0);
 	}
 });
 console.log("Type 'help' for a command list.");

@@ -112,12 +112,16 @@ $('#msgBox').keypress(function (e) {
 
 socket.on('CHAT_MSG', function(nick, msg)
 {
+	if(!hasAuth) return;
+	
 	add_message(nick, msg);
 	audio.play();
 });
 
 socket.on('USR_CONNECT', function()
 {
+	if(!hasAuth) return;
+	
 	$('.message-list').append($('<li class="user_notice">').text("User connected."));
 	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
@@ -125,6 +129,8 @@ socket.on('USR_CONNECT', function()
 
 socket.on('USR_DISCONNECT', function()
 {
+	if(!hasAuth) return;
+	
 	$('.message-list').append($('<li class="user_notice">').text("User disconnected."));
 	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
@@ -138,6 +144,8 @@ socket.on('CONN_KICKED', function(reason)
 
 socket.on('USR_KICKED', function(nick, reason)
 {
+	if(!hasAuth) return;
+	
 	$('.message-list').append("<span class='chat_message user_notice'><span class='chat_nick'>"+nick+"</span> was kicked("+reason+").</span><br/>");
 	objDiv.scrollTop = objDiv.scrollHeight;
 	getNicks();
@@ -149,6 +157,8 @@ socket.on('disconnected', function()
 
 socket.on('NICK_LIST', function(list)
 {
+	if(!hasAuth) return;
+	
 	if(!list) return;
 	
 	var html = "";
@@ -160,6 +170,8 @@ socket.on('NICK_LIST', function(list)
 
 socket.on('CHAT_HISTORY', function(list)
 {
+	if(!hasAuth) return;
+	
 	if(!list) return;
 	
 	for(var i = 0; i < list.length; i++)
@@ -177,8 +189,13 @@ socket.on('HAS_AUTH', function(status)
 		alert("Disconnected from server.");
 		window.location = window.location;
 	}
-	else
-		console.log("kk");
+});
+socket.on('SERVER_SHUTDOWN', function()
+{
+	hasAuth = false;
+	alert("Disconnected: Server is shutting down.");
+	window.location = window.location;
+
 });
 
 function getNicks()
