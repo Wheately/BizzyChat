@@ -102,7 +102,7 @@ $('#msgBox').keypress(function (e) {
 		text = decodeEntities(validate_message(text));
 		socket.emit('CHAT_MSG', text);
 		//$('.message-list').append("<span class='chat_message'><span class='chat_nick'>"+myNick+"</span>: "+text+"</span><br/>");
-		add_message(myNick, text);
+		//add_message(myNick, text);
 		
 		objDiv.scrollTop = objDiv.scrollHeight;
 		return false;

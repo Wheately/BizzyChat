@@ -15,6 +15,7 @@ var io = require('socket.io')(http);
 var FixedQueue = require('./inc/fqueue.js');
 var auth_lib = require("./inc/auth.js");
 var user_lib = require("./inc/users.js");
+var command_lib = require("./inc/commands.js");
 var Entities = require('html-entities').XmlEntities;
 entities = new Entities();
 
@@ -90,6 +91,14 @@ function remove_user(socket)
 	delete users[i];
 }
 
+//Create urls in chat.
+function urlify(text) {
+    var urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, function(url) {
+        return '<a target="_blank" href="' + url + '">' + url + '</a>';
+    })
+}
+
 /*
  * Called when a new chat message is received.
 */
@@ -114,18 +123,40 @@ function on_message(socket, msg)
 		return;
 	}
 	
-	//Trim the message if it is too long.
-	if(msg.length > _config["max_msg_length"])
-		msg = msg.substr(1, _config["max_msg_length"]) + "..."; //Add 3 dots on the end because why not.
+	//Check if message is command.
+	isCommand = false;
+
+	if(msg.charAt(0) == "/")
+	 isCommand = true;
 	
 	msg = entities.encode(msg);
+
+	msg = urlify(msg);
 	
 	//Add the message to the chat history
 	chat_history.push([user_info[socket.id]["nickname"], msg]);
 	
 	//And of course send it to all the other clients
-	socket.broadcast.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
+	if(!isCommand)
+		io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
 	
+	if(isCommand)
+	{
+		if(command_lib.isPublic(msg))
+		{
+			io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
+			io.sockets.emit('CHAT_MSG', "Server", command_lib.executeCommand(msg, io));			
+		}
+		else
+		{
+			chat_history.push([user_info[socket.id]["nickname"], msg]);
+			socket.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
+			chat_history.push(["Server", msg]);
+			socket.emit('CHAT_MSG', "Server", command_lib.executeCommand(msg, io));
+		}
+			
+	}
+		
 }
 
 /*
