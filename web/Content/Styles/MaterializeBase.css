@@ -1,0 +1,34 @@
+header, main, footer 
+{
+  padding-left: 240px; 
+  padding-right: 240px;
+}
+
+main{
+  position: relative;
+  margin-left: 240px;
+  margin-right: 240px;
+  height: calc(100% - 64px);
+}
+
+.right-side-nav{
+  left: auto !important;
+  right: 0;
+}
+
+.nav-wrapper{
+  background: #2980b9;
+  padding-left: 24px;
+}
+
+.side-nav-header{
+  height: 64px;
+  background-color: #F1F1F1;
+  border-bottom: 1px solid rgba(0,0,0,.1);
+}
+
+.side-nav-header span{
+  width: 100%;
+  text-align: center;
+  font-size: 18px;
+}
