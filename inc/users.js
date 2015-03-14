@@ -8,7 +8,7 @@ function kick_user(user_info, socket, reason)
 	socket.kicked = true; //Stops the disconnect event from sending an additional disconnected user event.
 	socket.emit("CONN_KICKED", reason);
 	if(user_info[socket.id]["nickname"])
-		socket.broadcast.emit("USR_KICKED", user_info[socket.id]["nickname"], reason);
+		socket.broadcast.emit("USR_KICKED", user_info[socket.id]["nickname"], reason, "status", "null");
 	socket.disconnect();
 
 }
