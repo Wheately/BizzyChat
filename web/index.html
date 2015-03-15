@@ -52,8 +52,11 @@
 					<div ng-repeat="item in Messages">
 						 <div ng-if="item.type != 'status'" class="message {{item.type}}">
 						 	<div class="message-nickname">{{item.nickname}}:</div>
-						 	<div ng-if="item.type != 'Code'" class="message-text" ng-bind-html="item.message | to_trusted"></div>
-						 	<ui-codemirror ng-if="item.type == 'Code'" ng-model="item.message" ui-codemirror-opts="{ lineWrapping: true, lineNumbers: true, mode: {{item.extra}}, matchBrackets: true, indentWithTabs: true, lineWrapping: false}"></ui-codemirror>
+						 	<div ng-if="item.type != 'Code'" class="message-text" ng-text-truncate="item.message" ng-tt-chars-threshold="250" ng-bind-html="item.message | to_trusted"></div>
+						 	<div ng-if="item.type == 'Code'">
+						 		<br/>
+						 		<ui-codemirror ng-model="item.message" ui-codemirror-opts="{ lineWrapping: true, lineNumbers: true, mode: {{item.extra}}, matchBrackets: true, indentWithTabs: true, lineWrapping: false}"></ui-codemirror>
+						 	</div>
 						 </div>
 						 <div ng-if="item.type == 'status'">
 						 	<div class="message-status">{{item.message}}</div>
@@ -65,6 +68,19 @@
 				</div>
 			</div>
 		</main>
+
+		<!-- Kicked Dialog -->
+		<div id="kickedModal" class="modal modal-fixed-footer" ng-controller="LoginCtrl">
+			<div class="modal-content">
+			    <h4>Kicked</h4>
+			    
+				<p>You were kicked from the server, click below to sign back in.</p>
+
+			</div>
+			<div class="modal-footer">
+			    <a href="#" ng-click="joinServerDialog()" class="waves-effect waves-green btn-flat modal-action">Join Server</a>
+			</div>
+		</div>
 
 		<!-- Join Chat Dialog -->
 		<div id="modal1" class="modal modal-fixed-footer" ng-controller="LoginCtrl">
@@ -110,12 +126,15 @@
 			</div>
 		</div>
 
+
+
 		<script type="text/javascript" src="bower_components/jquery/dist/jquery.min.js"></script>
 		<script type="text/javascript" src="bower_components/materialize/dist/js/materialize.min.js"></script>
 		<script type="text/javascript" src="bower_components/angular/angular.min.js"></script>
 		<script type="text/javascript" src="bower_components/angular-cookies/angular-cookies.min.js"></script>
 		<script type="text/javascript" src="bower_components/angular-scroll-glue/src/scrollglue.js"></script>
 		<script type="text/javascript" src="bower_components/angular-ui-codemirror/ui-codemirror.min.js"></script>
+		<script type="text/javascript" src="bower_components/read-more/angular-readmore.js"></script>
 		<script src="https://cdn.socket.io/socket.io-1.2.0.js"></script>
 		<script type="text/javascript" src="Scripts/app.js"></script>
 		<script type="text/javascript" src="Scripts/Controllers/ChatController.js"></script>

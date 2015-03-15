@@ -6,22 +6,18 @@ angular.module('app')
 		$scope.Messages = [];
 		$scope.userMessage = "";
 
-		$scope.editorOptions = {
-	        lineWrapping : true,
-	        lineNumbers: false,
-	        mode: 'html',
-    	};
-
+		//Send The Users Message To The Server.
 		$scope.sendMessage = function()
 		{
-			//Send Message To Server
-			if($rootScope.authorized)
+			//If authorized and valid, send message
+			if($rootScope.authorized && $scope.userMessage != "")
 				$rootScope.socket.emit('CHAT_MSG', $scope.userMessage);
 
 			//Clear Input
 			$scope.userMessage = "";
 		}
 
+		//Initlize chat.
 		$scope.chatInit = function()
 		{
 
@@ -52,6 +48,12 @@ angular.module('app')
 				$scope.notification.play();
 			});
 
+
+			//=============================
+			// Listieners
+			//=============================
+
+			//When user connects, notify users.
 			$rootScope.socket.on('USR_CONNECT', function(nickname, type, extra)
 			{
 				if(!$rootScope.authorized) return;
@@ -61,6 +63,7 @@ angular.module('app')
 				});
 			});
 
+			//When user disconnects, notify users.
 			$rootScope.socket.on('USR_DISCONNECT', function(nickname, type, extra)
 			{
 				if(!$rootScope.authorized) return;
@@ -70,6 +73,7 @@ angular.module('app')
 				});
 			});
 
+			//When user is kicked, notify users.
 			$rootScope.socket.on('USR_KICKED', function(nickname, reason, type, extra)
 			{
 				if(!$rootScope.authorized) return;
@@ -80,6 +84,7 @@ angular.module('app')
 			});
 		}
 
+		//Initilize the chat.
 		$scope.chatInit();
 
 	}]);
