@@ -11,6 +11,7 @@ angular.module('app')
 			{
 				if(status)
 				{
+					$rootScope.socket.emit("GET_ROOMS");
 					$('#modal1').closeModal();
 					$rootScope.authorized = true;
 					toast("Successfully Logged In!", 3000);
@@ -25,7 +26,7 @@ angular.module('app')
 			});
 
 			//Send Message To Server
-			$rootScope.socket.emit('AUTH_LOGIN', $scope.nickname, $scope.password);
+			$rootScope.socket.emit('AUTH_LOGIN', $scope.nickname, $scope.password, $scope.group, $scope.gpass);
 		}
 
 		$scope.joinServerDialog = function()

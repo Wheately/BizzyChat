@@ -88,6 +88,7 @@ register_commands("/quit", "Quit the server.", quit_command, true, true, "You wi
 register_commands("/code", "Formats and highlights code you paste.", code_command, true, true, "<span>Formats and highlights code you paste<span><br/><b>/code [language] [code]</b><br/><span>Supported Languages:</span><ul><li><i>HTML</i></li><li><i>CSS</i></li><li><i>PHP</i></li><li><i>JavaScript</i></li><li><i>Java</i></li></ul>");
 register_commands("/emmawatson", "Emma", emmawatson_command, false, true, "Watson");
 register_commands("/bacon", "Bacon", bacon_command, false, true, "Bacon");
+register_commands("/stealbacon", "Steals bacon", stealbacon_command, true, true, "Steals bacon");
 
 
 //=============================
@@ -95,7 +96,10 @@ register_commands("/bacon", "Bacon", bacon_command, false, true, "Bacon");
 //=============================
 
 function bacon_command (io, user, socket) {
-	io.sockets.emit('CHAT_MSG', "Server", "<img width='400' src='http://investorplace.com/wp-content/uploads/2014/02/bacon.jpg' />", "server", "null");
+	io.sockets.emit('CHAT_MSG', "Server", "<div class='bacon-img'><img width='400' src='http://investorplace.com/wp-content/uploads/2014/02/bacon.jpg' /></div>", "server", "null");
+}
+function stealbacon_command(io, user, socket) {
+	io.sockets.emit("STEAL_BACON", user["nickname"]);
 }
 
 function emmawatson_command (io, user, socket) {

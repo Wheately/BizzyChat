@@ -37,7 +37,7 @@ angular.module('app')
 			});
 
 			//Display new chat message.
-			$rootScope.socket.on('CHAT_MSG', function(nick, msg, type, extra)
+			$rootScope.socket.on('CHAT_MSG', function(nick, msg, room, type, extra)
 			{
 				if(!$rootScope.authorized) return;
 				
@@ -50,9 +50,18 @@ angular.module('app')
 
 
 			//=============================
-			// Listieners
+			// Listeners
 			//=============================
 
+			$rootScope.socket.on('STEAL_BACON', function(nick)
+			{
+				if(!$rootScope.authorized) return;
+				
+				var img = document.getElementsByClassName("bacon-img");
+				for(var i = 0; i < img.length; i++)
+					img.innerHTML = '<strong>' + nick + "</strong> stole this bacon!";
+			});
+			
 			//When user connects, notify users.
 			$rootScope.socket.on('USR_CONNECT', function(nickname, type, extra)
 			{

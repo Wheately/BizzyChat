@@ -7,6 +7,12 @@ _config["server_root"] = __dirname ;
 _config["max_msg_length"] = 1500;
 
 //Include our requirements
+var events = require('events');
+var eventEmitter = new events.EventEmitter();
+
+var db = require("./inc/database.js");
+var dbcon = false;
+
 var readline = require('readline');
 var express = require('express');
 var app = express();
@@ -16,6 +22,7 @@ var FixedQueue = require('./inc/fqueue.js');
 var auth_lib = require("./inc/auth.js");
 var user_lib = require("./inc/users.js");
 var command_lib = require("./inc/commands.js");
+var group_lib = require("./inc/groups.js");
 var Entities = require('html-entities').XmlEntities;
 entities = new Entities();
 
@@ -24,6 +31,25 @@ var users = []; //Holds a list of user sockets
 var user_info = []; //Holds information on each socket such as nickname, spam time out stuff, etc.
 
 app.use(express.static(__dirname + '/web')); //serve web directory
+
+//init stuff
+
+function on_db_connect(success, conn)
+{
+	if(!success)
+	{
+		console.log("Failed to load groups: couldn't connect to database.");
+		return;
+	}
+	dbcon = conn;
+	
+	console.log("Initializing groups.");
+	group_lib.init(dbcon);
+	
+	if(!dbcon) console.log("DBCon is wrong.");
+}
+eventEmitter.on('db_connected', on_db_connect);
+db.init(eventEmitter);
 
 /*
  * Runs every 1 second for timed things such as spam time outs.
@@ -100,9 +126,21 @@ function urlify(text) {
 }
 
 /*
+ * Sends a chat message to all users in the specified room in the specified group.
+*/
+function send_group_message(gid, room, from, msg)
+{
+	var users = group_lib.getUsersInGroup(gid, user_info);
+	if(!users) return;
+	
+	for(var i = 0; i < users.length; i++)
+		io.sockets.to(users[i]).emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), room, "user", "null");
+}
+
+/*
  * Called when a new chat message is received.
 */
-function on_message(socket, msg)
+function on_message(socket, room, msg)
 {
 	//checks there is info for the user.
 	//If not, kick them because they probably aren't authenticated.
@@ -123,6 +161,15 @@ function on_message(socket, msg)
 		return;
 	}
 	
+	var gid = user_info[socket.id]["group"];
+	if(!room || !gid)
+	{
+		user_lib.KickUser(user_info, socket, "Not in valid group/room.");
+		remove_user(socket);
+		return;
+	}
+	
+	
 	//Check if message is command.
 	isCommand = false;
 
@@ -137,7 +184,8 @@ function on_message(socket, msg)
 	
 	//And of course send it to all the other clients
 	if(!isCommand)
-		io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), "user", "null");
+		send_group_message(gid, room, from, msg)
+		//io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), "user", "null");
 	
 	if(isCommand)
 	{
@@ -154,7 +202,7 @@ function on_message(socket, msg)
 			socket.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg, "user", "null");
 			chat_history.push(["Server", msg, "user", "null"]);
 
-			var response = command_lib.executeCommand(msg, io);
+			var response = command_lib.executeCommand(msg, io, user_info[socket.id], socket);
 
 			if(response !== undefined)
 				socket.emit('CHAT_MSG', "Server", response, "server", "null");
@@ -246,10 +294,19 @@ io.on('connection', function(socket)
 	});
 	
 	//User sent a login request
-	socket.on('AUTH_LOGIN', function(nick, pass)
+	socket.on('AUTH_LOGIN', function(nick, pass, group, gpass)
 	{
+		var gid = -1;
+		if(!group || group == "" || !(gid = group_lib.isGroup(group)))
+		{
+			socket.emit('AUTH_RESPONSE', false, "The specified group could not be found.");
+			return;
+		}
+		
 		var nick = auth_lib.checkAuth(user_info, socket, nick, pass);
 		user_info[socket.id]["nickname"] = nick;
+		user_info[socket.id]["group"] = gid;
+		console.log(gid);
 		
 		//If the login was successful, send them the chat history and tell everyone else they joined.
 		if(nick)
@@ -257,6 +314,21 @@ io.on('connection', function(socket)
 			socket.broadcast.emit('USR_CONNECT', user_info[socket.id]["nickname"], "status", "null");
 			send_history(socket);
 		}
+	});
+	
+	//user wants rooms in their group
+	socket.on("GET_ROOMS", function(){
+		var gid = user_info[socket.id]["group"];
+		var rooms = group_lib.getRooms(gid);
+		//
+		if(!rooms) return;
+		console.log("LEN: "+rooms.length);
+		
+		var temp = [];
+		for(var i = 0; i < rooms.length; i++)
+			temp.push("<a href='#' class='room-item' id='room-"+rooms[i]["id"]+"'>"+rooms[i]["title"]+"</a>");
+		
+		socket.emit("GET_ROOMS", temp);
 	});
 	
 	//User asked for the nick list.

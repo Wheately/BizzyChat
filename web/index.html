@@ -27,10 +27,16 @@
 		</header>
 
 		<!-- Side Navagation -->
-		<ul id="nav-mobile" class="side-nav fixed">
+		<ul id="nav-mobile" class="side-nav fixed"  ng-controller="ChannelCtrl">
 			<div class="side-nav-header valign-wrapper">
 				<span class="valign online-users-text">Channels</span>
 			</div>
+			
+			<ul>
+				<li ng-repeat="item in roomList track by item">
+					<div class="room-name" ng-bind-html="item | to_trusted"></div>
+				</li>
+			</ul>
 		</ul>
 
 		<ul id="nav-mobile" class="side-nav right-side-nav fixed"  ng-controller="UsersCtrl">
@@ -103,11 +109,11 @@
 
 					    <div class="row">
 					    	<div class="input-field col s6">
-					    		<input id="group" type="text" class="validate">
+					    		<input id="group" ng-model="group" type="text" class="validate">
 					    		<label for="group">Group (Required)</label>
 					    	</div>
 					        <div class="input-field col s6">
-					        	<input id="group_password" type="text" class="validate">
+					        	<input id="group_password" ng-model="gpass" type="text" class="validate">
 					        	<label for="group_password">Group Password</label>
 					        </div>
 					    </div>
@@ -140,5 +146,6 @@
 		<script type="text/javascript" src="Scripts/Controllers/ChatController.js"></script>
 		<script type="text/javascript" src="Scripts/Controllers/LoginController.js"></script>
 		<script type="text/javascript" src="Scripts/Controllers/UsersController.js"></script>
+		<script type="text/javascript" src="Scripts/Controllers/ChannelsController.js"></script>
 	</body>
 </html>
