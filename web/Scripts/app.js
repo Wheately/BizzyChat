@@ -1,7 +1,7 @@
-app = angular.module('app', ['ngCookies', 'luegg.directives']);
+app = angular.module('app', ['ngCookies', 'luegg.directives', 'ui.codemirror', 'ngTextTruncate']);
 
 angular.module('app')
-    .filter('to_trusted', ['$sce', function($sce){
+    .filter('to_trusted', ['$sce', '$compile', function($sce, $compile){
         return function(text) {
             return $sce.trustAsHtml(text);
         };
@@ -21,7 +21,13 @@ app.run(['$rootScope', '$cookies', function($rootScope, $cookies){
 	//Handel user being kicked.
 	$rootScope.socket.on('CONN_KICKED', function(reason)
 	{
-		alert("You were kicked from the server: " + reason);
+		$("#kickedModal").openModal({
+			dismissible: false // Modal can be dismissed by clicking outside of the modal
+		});
+	});
+
+	$rootScope.socket.on("DO_QUIT", function(){
+		location.reload();
 	});
 
 }]);

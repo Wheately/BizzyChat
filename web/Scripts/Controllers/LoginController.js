@@ -28,4 +28,16 @@ angular.module('app')
 			$rootScope.socket.emit('AUTH_LOGIN', $scope.nickname, $scope.password);
 		}
 
+		$scope.joinServerDialog = function()
+		{
+			$("#kickedModal").closeModal();
+
+			setTimeout(function(e) {
+				$('#modal1').openModal({
+					dismissible: false // Modal can be dismissed by clicking outside of the modal
+				});
+			}, 400);
+
+		}
+
 	}]);

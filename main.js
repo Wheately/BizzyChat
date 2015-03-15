@@ -128,31 +128,36 @@ function on_message(socket, msg)
 
 	if(msg.charAt(0) == "/")
 	 isCommand = true;
+		
 	
-	msg = entities.encode(msg);
-
 	msg = urlify(msg);
 	
 	//Add the message to the chat history
-	chat_history.push([user_info[socket.id]["nickname"], msg]);
+	chat_history.push([user_info[socket.id]["nickname"], entities.encode(msg), "user", "null"]);
 	
 	//And of course send it to all the other clients
 	if(!isCommand)
-		io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
+		io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), "user", "null");
 	
 	if(isCommand)
 	{
 		if(command_lib.isPublic(msg))
 		{
-			io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
-			io.sockets.emit('CHAT_MSG', "Server", command_lib.executeCommand(msg, io));			
+			io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg, "user", "null");
+			var response = command_lib.executeCommand(msg, io, user_info[socket.id], socket);
+			if(response !== undefined)
+			io.sockets.emit('CHAT_MSG', "Server", response, "server", "null");			
 		}
 		else
 		{
-			chat_history.push([user_info[socket.id]["nickname"], msg]);
-			socket.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg);
-			chat_history.push(["Server", msg]);
-			socket.emit('CHAT_MSG', "Server", command_lib.executeCommand(msg, io));
+			chat_history.push([user_info[socket.id]["nickname"], msg, "user", "null"]);
+			socket.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg, "user", "null");
+			chat_history.push(["Server", msg, "user", "null"]);
+
+			var response = command_lib.executeCommand(msg, io);
+
+			if(response !== undefined)
+				socket.emit('CHAT_MSG', "Server", response, "server", "null");
 		}
 			
 	}
@@ -213,7 +218,7 @@ io.on('connection', function(socket)
 		if(!socket.kicked && user_info[socket.id]["nickname"])
 		{	
 			//If it wasn't, tell everyone they disconnected then remove their info.
-			io.emit('USR_DISCONNECT', user_info[socket.id]["nickname"]);
+			io.emit('USR_DISCONNECT', user_info[socket.id]["nickname"], "status", "null");
 			user_info[socket.id] = null;
 			
 			var i = users.indexOf(socket);
@@ -249,7 +254,7 @@ io.on('connection', function(socket)
 		//If the login was successful, send them the chat history and tell everyone else they joined.
 		if(nick)
 		{
-			socket.broadcast.emit('USR_CONNECT', user_info[socket.id]["nickname"]);
+			socket.broadcast.emit('USR_CONNECT', user_info[socket.id]["nickname"], "status", "null");
 			send_history(socket);
 		}
 	});
