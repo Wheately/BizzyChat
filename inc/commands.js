@@ -122,7 +122,7 @@ function time_command () {
 }
 
 function version_command () {
-	return "0.0.1";
+	return "0.0.2";
 }
 
 function quit_command (io, user, socket) {
