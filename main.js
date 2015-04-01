@@ -24,6 +24,8 @@ var user_lib = require("./inc/users.js");
 var command_lib = require("./inc/commands.js");
 var group_lib = require("./inc/groups.js");
 var Entities = require('html-entities').XmlEntities;
+var Messages = require('./inc/ChatHandlers/Messages.js');
+var Commands = require('./inc/Commands/CommandService.js');
 entities = new Entities();
 
 var chat_history = FixedQueue.FixedQueue(20); //Use a fixed queue to store the chat history.
@@ -125,133 +127,8 @@ function urlify(text) {
     })
 }
 
-/*
- * Sends a chat message to all users in the specified room in the specified group.
-*/
-function send_group_message(gid, room, from, msg)
-{
-	var users = group_lib.getUsersInGroup(gid, user_info);
-	if(!users) return;
-	
-	for(var i = 0; i < users.length; i++)
-		io.sockets.to(users[i]).emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), room, "user", "null");
-}
 
-/*
- * Called when a new chat message is received.
-*/
-function on_message(socket, room, msg)
-{
-	//checks there is info for the user.
-	//If not, kick them because they probably aren't authenticated.
-	if(!user_info[socket.id] || !user_info[socket.id]["nickname"])
-	{
-		user_lib.KickUser(user_info, socket, "Not authenticated.");
-		remove_user(socket);
-		return;
-	}
-	
-	//Add onto the time out message count.
-	user_info[socket.id]["chat_timeout"] = 0;
-	user_info[socket.id]["num_messages"]++;
-	if(user_info[socket.id]["num_messages"] >= _config["timeout_msg_num"])
-	{
-		user_lib.KickUser(user_info, socket, "Kicked for chat spam."); //Kick them for spam if they posted too many messages too fast.
-		remove_user(socket);
-		return;
-	}
-	
-	var gid = user_info[socket.id]["group"];
-	if(!room || !gid)
-	{
-		user_lib.KickUser(user_info, socket, "Not in valid group/room.");
-		remove_user(socket);
-		return;
-	}
-	
-	
-	//Check if message is command.
-	isCommand = false;
 
-	if(msg.charAt(0) == "/")
-	 isCommand = true;
-		
-	
-	msg = urlify(msg);
-	
-	//Add the message to the chat history
-	chat_history.push([user_info[socket.id]["nickname"], entities.encode(msg), "user", "null"]);
-	
-	//And of course send it to all the other clients
-	if(!isCommand)
-		send_group_message(gid, room, from, msg)
-		//io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], entities.encode(msg), "user", "null");
-	
-	if(isCommand)
-	{
-		if(command_lib.isPublic(msg))
-		{
-			io.sockets.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg, "user", "null");
-			var response = command_lib.executeCommand(msg, io, user_info[socket.id], socket);
-			if(response !== undefined)
-			io.sockets.emit('CHAT_MSG', "Server", response, "server", "null");			
-		}
-		else
-		{
-			chat_history.push([user_info[socket.id]["nickname"], msg, "user", "null"]);
-			socket.emit('CHAT_MSG', user_info[socket.id]["nickname"], msg, "user", "null");
-			chat_history.push(["Server", msg, "user", "null"]);
-
-			var response = command_lib.executeCommand(msg, io, user_info[socket.id], socket);
-
-			if(response !== undefined)
-				socket.emit('CHAT_MSG', "Server", response, "server", "null");
-		}
-			
-	}
-		
-}
-
-/*
- * Called when someone sends a private message.
-*/
-function on_pmessage(socket, nick, msg)
-{
-	//checks there is info for the user.
-	//If not, kick them because they probably aren't authenticated.
-	if(!user_info[socket.id] || !user_info[socket.id]["nickname"])
-	{
-		user_lib.KickUser(user_info, socket, "Not authenticated.");
-		remove_user(socket);
-		return;
-	}
-	
-	//Add onto the time out message count.
-	user_info[socket.id]["chat_timeout"] = 0;
-	user_info[socket.id]["num_messages"]++;
-	if(user_info[socket.id]["num_messages"] >= _config["timeout_msg_num"])
-	{
-		user_lib.KickUser(user_info, socket, "Kicked for chat spam."); //Kick them for spam if they posted too many messages too fast.
-		remove_user(socket);
-		return;
-	}
-	
-	//Trim the message if it is too long.
-	if(msg.length > _config["max_msg_length"])
-		msg = msg.substr(1, _config["max_msg_length"]) + "..."; //Add 3 dots on the end because why not.
-	
-	msg = entities.encode(msg);
-	
-	var csock = get_user(nick);
-	if(!csock)
-	{
-		socket.emit("MSG_ERROR", "PM_NONICK", nick);
-		return;
-	}
-	
-	//send it to the other guy
-	csock.emit('CHAT_PMSG', user_info[socket.id]["nickname"], msg);
-}
 
 //User connections
 io.on('connection', function(socket)
@@ -274,13 +151,14 @@ io.on('connection', function(socket)
 		}
 	});
 	
-	socket.on('CHAT_MSG', function(msg)
+	socket.on('CHAT_MSG', function(room, msg)
 	{
-		on_message(socket, msg); //send chat messages to our on_message function.
+		Messages.SendMessage(socket, room, msg); //send chat messages to our on_message function.
 	});
+
 	socket.on('CHAT_PMSG', function(to, msg)
 	{
-		on_pmessage(socket, to, msg);
+		Messages.SendPM(socket, to, msg);
 	});
 	
 	//User asked if they are authenticated. If not, they were probably reconnected.
@@ -387,6 +265,8 @@ rl.on('line', function (cmdc)
 		chat_history = FixedQueue.FixedQueue(20);
 		console.log("CMD: Chat history cleared.");
 	}
+	else if(cmd == "test")
+		console.log(Commands.executeCommand());
 	else if(cmd == "sendmsg")
 		io.emit("CHAT_MSG", "Server", args_string(args, 1));
 	else if(cmd == "sendpmsg")

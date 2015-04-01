@@ -3,11 +3,6 @@ angular.module('app')
 		
 		$scope.userList = [];
 
-		$scope.getNicks = function()
-		{
-			alert("getting list");
-		}
-
 		$scope.init = function()
 		{			
 			$rootScope.socket.on('NICK_LIST', function(list)

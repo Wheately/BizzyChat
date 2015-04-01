@@ -29,13 +29,8 @@ function load_rooms()
 		clear_rooms();
 		for(var i = 0; i < res.length; i++)
 		{
-			var ind = get_group_index(res[i]["gid"]);
-			if(ind < 0) continue;
-			
-			
-			groups[ind]["rooms"].push(res[i]);
-		}
 		console.log(groups);
+		}
 	});
 }
 

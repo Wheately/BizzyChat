@@ -11,7 +11,7 @@ angular.module('app')
 		{
 			//If authorized and valid, send message
 			if($rootScope.authorized && $scope.userMessage != "")
-				$rootScope.socket.emit('CHAT_MSG', $scope.userMessage);
+				$rootScope.socket.emit('CHAT_MSG', "g1", $scope.userMessage);
 
 			//Clear Input
 			$scope.userMessage = "";
@@ -20,6 +20,20 @@ angular.module('app')
 		//Initlize chat.
 		$scope.chatInit = function()
 		{
+
+			//=============================
+			// Listeners
+			//=============================
+
+			//$rootScope.socket.on('STEAL_BACON', function(nick)
+			//{
+			//	if(!$rootScope.authorized) return;
+			//	
+			//	var img = document.getElementsByClassName("bacon-img");
+			//	for(var i = 0; i < img.length; i++)
+			//		img.innerHTML = '<strong>' + nick + "</strong> stole this bacon!";
+			//});
+			
 
 			//Load chat history.
 			$rootScope.socket.on('CHAT_HISTORY', function(list)
@@ -48,20 +62,6 @@ angular.module('app')
 				$scope.notification.play();
 			});
 
-
-			//=============================
-			// Listeners
-			//=============================
-
-			$rootScope.socket.on('STEAL_BACON', function(nick)
-			{
-				if(!$rootScope.authorized) return;
-				
-				var img = document.getElementsByClassName("bacon-img");
-				for(var i = 0; i < img.length; i++)
-					img.innerHTML = '<strong>' + nick + "</strong> stole this bacon!";
-			});
-			
 			//When user connects, notify users.
 			$rootScope.socket.on('USR_CONNECT', function(nickname, type, extra)
 			{

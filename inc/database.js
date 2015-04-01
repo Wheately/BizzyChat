@@ -2,12 +2,14 @@ var mysql      = require('mysql');
 var connection = false;
 function init(event)
 {
+		
 	var conn = mysql.createConnection({
-	  host     : '',//wheately: You can ask me for ours.
+	  host     : 'bizzycola.info',
 	  user     : 'bizzychat',
-	  password : '', //Wheately: And for this too.
+	  password : 'SfCV8cL75hTRAywd',
 	  database : 'bizzychat'
 	});
+	
 	conn.connect(function(err) {
 		if (err) 
 		{

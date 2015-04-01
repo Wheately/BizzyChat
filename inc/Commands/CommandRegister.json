@@ -1,0 +1,76 @@
+{
+  "commands":{
+    
+    "Ban":{
+      "name": "ban",
+      "public": false,
+      "description": "Bans a user.",
+      "interperted": false,
+      "admin": true
+    },
+    
+    "Help":{
+      "name": "help",
+      "description": "Displays help.",
+      "public": false,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Rules":{
+      "name": "rules",
+      "description": "Displays the server rules.",
+      "public": false,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Commands":{
+      "name": "commands",
+      "description": "Display a list of commands.",
+      "public": false,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Giphy":{
+      "name": "gif",
+      "description": "Displays a random gif based on the text entered.",
+      "public": true,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Time":{
+      "name": "time",
+      "description": "Displays the server time.",
+      "public": false,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Code":{
+      "name": "code",
+      "description": "Formats the provided code.",
+      "public": false,
+      "interperted": true,
+      "admin": false
+    },
+    
+    "EmmaWatson":{
+      "name": "emmawatson",
+      "description": "Displays a picture of Emma Watson.",
+      "public": true,
+      "interperted": false,
+      "admin": false
+    },
+    
+    "Bacon":{
+      "name": "bacon",
+      "description": "Displays a picture of bacon.",
+      "public": true,
+      "interperted": false,
+      "admin": false
+    }
+  }
+}

@@ -2,9 +2,9 @@ var CommandList = [];
 var http = require('http');
 
 //Registers a command.
-function register_commands(command, description, method, public, requireSocket, detailedHelp) 
+function register_commands(command, description, method, public, requireSocket, detailedHelp, interpreted) 
 {
-	var CommandItem = [command, description, method, public, requireSocket, detailedHelp];
+	var CommandItem = [command, description, method, public, requireSocket, detailedHelp, interpreted];
 	CommandList.push(CommandItem);
 }
 
@@ -64,11 +64,15 @@ function command_public(command){
 	return Response;
 }
 
+function command_interpreted (argument) {
+	
+}
+
 
 //=============================
 // Register Commands
 //
-// register_commands([Command-Name], [Command-Description], [Command-Function], [Command-Public], [Use-Socket], [Command-Help])
+// register_commands([Command-Name], [Command-Description], [Command-Function], [Command-Public], [Use-Socket], [Command-Help], [Command-Interpreted])
 //
 // Command-Name(string) - The name the user will use to call the command.
 // Command-Description(string) - The description of the command, this will be used in the /commands list. Please put something more than "Does stuff and things..." :P
@@ -76,19 +80,20 @@ function command_public(command){
 // Command-Public(bool) - This changes whether other users will see the output of this command.
 // Use-Socket(bool) - This will give you access to io, user, and socket. If the command takes in parameter data, then it will be the last three parameters.
 // Command-Help(string) - Do I really need to explain this... fine, it makes the register command all ugly and provides help to the stupid user. 
+// Command-Interpreted(bool) - If true, then the response will be from the user, else the response will be from the server.
 //
 //=============================
-register_commands("/help", "Displays help list.", help_command, false, false, "Really, you asked for more help with help???");
-register_commands("/rules", "Displays the server rules.", rules_command, true, false, "Wow, it is a pretty simple command, no paramaeters.");
-register_commands("/commands", "Displays all server commands.", commands_command, false, false, "");
-register_commands("/gif", "Displays a random gif based on the text entered.", gif_command, true, true, "<span>Gets a random gif based on the text entered.</span><br/><b>/gif [name]</b>");
-register_commands("/time", "Displays the server time.", time_command, true, false, "Does not work right now... don't know why...");
-register_commands("/version", "Displays the version of the server.", version_command, true, false, "This one is not complicated either...");
-register_commands("/quit", "Quit the server.", quit_command, true, true, "You will be removed from the server, and brought to the login page.");
-register_commands("/code", "Formats and highlights code you paste.", code_command, true, true, "<span>Formats and highlights code you paste<span><br/><b>/code [language] [code]</b><br/><span>Supported Languages:</span><ul><li><i>HTML</i></li><li><i>CSS</i></li><li><i>PHP</i></li><li><i>JavaScript</i></li><li><i>Java</i></li></ul>");
-register_commands("/emmawatson", "Emma", emmawatson_command, false, true, "Watson");
-register_commands("/bacon", "Bacon", bacon_command, false, true, "Bacon");
-register_commands("/stealbacon", "Steals bacon", stealbacon_command, true, true, "Steals bacon");
+register_commands("/help", "Displays help list.", help_command, false, false, "Really, you asked for more help with help???", false);
+register_commands("/rules", "Displays the server rules.", rules_command, true, false, "Wow, it is a pretty simple command, no paramaeters.", false);
+register_commands("/commands", "Displays all server commands.", commands_command, false, false, "Shows a list of commands", false);
+register_commands("/gif", "Displays a random gif based on the text entered.", gif_command, true, true, "<span>Gets a random gif based on the text entered.</span><br/><b>/gif [name]</b>", false);
+register_commands("/time", "Displays the server time.", time_command, true, false, "Does not work right now... don't know why...", false);
+register_commands("/version", "Displays the version of the server.", version_command, true, false, "This one is not complicated either...", false);
+register_commands("/quit", "Quit the server.", quit_command, true, true, "You will be removed from the server, and brought to the login page.", false);
+register_commands("/code", "Formats and highlights code you paste.", code_command, true, true, "<span>Formats and highlights code you paste<span><br/><b>/code [language] [code]</b><br/><span>Supported Languages:</span><ul><li><i>HTML</i></li><li><i>CSS</i></li><li><i>PHP</i></li><li><i>JavaScript</i></li><li><i>Java</i></li></ul>", true);
+register_commands("/emmawatson", "Emma Watson", emmawatson_command, false, true, "Watson", true, false, "Displays a picture of Emma Watson", false);
+register_commands("/bacon", "Bacon", bacon_command, false, true, "Bacon", false);
+register_commands("/stealbacon", "Steals bacon", stealbacon_command, true, true, "Steals bacon", false);
 
 
 //=============================
@@ -195,5 +200,6 @@ function gif_command (gif, io, user, socket)
 
 module.exports = {
 	executeCommand: execute_command,
-	isPublic: command_public
+	isPublic: command_public,
+	isInterpreted: command_interpreted
 };
